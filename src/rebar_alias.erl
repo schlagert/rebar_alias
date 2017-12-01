@@ -41,11 +41,13 @@ example(Alias) ->
     "rebar3 " ++ atom_to_list(Alias).
 
 desc(Cmds) ->
-    "Equivalent to running: rebar3 do " ++ string:join(lists:map(fun({Cmd, Args}) ->
-                                                                     atom_to_list(Cmd) ++ " " ++ Args;
-                                                                    (Cmd) ->
-                                                                     atom_to_list(Cmd)
-                                                                 end, Cmds), ",").
+    "Equivalent to running: rebar3 do "
+        ++ rebar_string:join(lists:map(fun to_desc/1, Cmds), ",").
+
+to_desc({Cmd, Args}) ->
+    atom_to_list(Cmd) ++ " " ++ Args;
+to_desc(Cmd) ->
+    atom_to_list(Cmd).
 
 module(Name) ->
     {attribute,1,module,Name}.
@@ -60,12 +62,33 @@ do_func(Cmds) ->
        [],
        [{call,1,
          {remote,1,{atom,1,rebar_prv_do},{atom,1,do_tasks}},
-         [to_args(Cmds),{var,1,'State'}]}]}]}.
+         [make_args(Cmds),{var,1,'State'}]}]}]}.
 
+make_args(Cmds) ->
+    make_list(
+      lists:map(fun make_tuple/1,
+                lists:map(fun make_arg/1, Cmds))).
 
-to_args([]) ->
-    {nil,1};
-to_args([{Cmd, Args} | Rest]) ->
-    {cons,1,{tuple,1,[{string,1,atom_to_list(Cmd)},{string,1,Args}]}, to_args(Rest)};
-to_args([Cmd | Rest]) ->
-    {cons,1,{tuple,1,[{string,1,atom_to_list(Cmd)},{nil,1}]}, to_args(Rest)}.
+make_arg({Cmd, Args}) ->
+    {make_string(Cmd), make_list([make_string(A) || A <- split_args(Args)])};
+make_arg(Cmd) ->
+    {make_string(Cmd), make_list([])}.
+
+make_tuple(Tuple) ->
+    {tuple, 1, tuple_to_list(Tuple)}.
+
+make_list(List) ->
+    lists:foldr(
+      fun(Elem, Acc) -> {cons, 1, Elem, Acc} end,
+      {nil, 1},
+      List).
+
+make_string(Atom) when is_atom(Atom) ->
+    make_string(atom_to_list(Atom));
+make_string(String) when is_list(String) ->
+    {string, 1, String}.
+
+split_args(Args) ->
+    rebar_string:lexemes(
+      lists:map(fun($=) -> 32; (C) -> C end, Args),
+      " ").
