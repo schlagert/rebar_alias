@@ -50,19 +50,19 @@ to_desc(Cmd) ->
     atom_to_list(Cmd).
 
 module(Name) ->
-    {attribute,1,module,Name}.
+    {attribute, 1, module, Name}.
 
 exports() ->
-    {attribute,1,export,[{do,1}]}.
+    {attribute, 1, export, [{do, 1}]}.
 
 do_func(Cmds) ->
-    {function,1,do,1,
-     [{clause,1,
-       [{var,1,'State'}],
+    {function, 1, do, 1,
+     [{clause, 1,
+       [{var, 1, 'State'}],
        [],
-       [{call,1,
-         {remote,1,{atom,1,rebar_prv_do},{atom,1,do_tasks}},
-         [make_args(Cmds),{var,1,'State'}]}]}]}.
+       [{call, 1,
+         {remote, 1, {atom, 1, rebar_prv_do}, {atom, 1, do_tasks}},
+         [make_args(Cmds), {var, 1, 'State'}]}]}]}.
 
 make_args(Cmds) ->
     make_list(
